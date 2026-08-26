@@ -15,9 +15,7 @@ public class NotionTools {
         this.notionService = notionService;
     }
 
-    /**
-     * Notion 일정 추가 Tool의 입력값
-     */
+    //Notion 일정 추가 Tool의 입력값
     public record AddEventRequest(
             @Description("추가할 일정의 제목. 예: 프로젝트 회의, 병원 예약")
             String title,
@@ -25,8 +23,14 @@ public class NotionTools {
             String startDateIso
     ) {}
 
-    public ToolCallback getAddEventTool() {
+    //Notion에서 검색할 일정의 제목
+    public record FindEventRequest(
+            @Description("검색할 일정의 제목")
+            String title
+    ){}
 
+    //일정을 추가하는 Tool
+    public ToolCallback getAddEventTool() {
         return FunctionToolCallback.builder("addNotionEvent", (AddEventRequest req) -> {
                             System.out.println("=== AI Tool 호출 ===");
                             System.out.println("title: " + req.title());
@@ -48,5 +52,34 @@ public class NotionTools {
                         """)
                 .inputType(AddEventRequest.class)
                 .build();
+    }
+
+    //제목을 기준으로 Notion 일정을 검색하는 Tool
+    public ToolCallback getFindEventTool(){
+        return FunctionToolCallback.builder("findNotionEvent",
+            (FindEventRequest req) -> {
+                String pageId = notionService.findEventByTitle(req.title());
+
+                //해당 제목의 일정이 없는 경우
+                if(pageId == null){
+                    return "해당 제목의 일정을 찾을 수 없습니다.";
+                }
+
+                return "찾은 일정의 Page ID : " + pageId;
+            }
+        ).description("""
+            사용자가 특정 Notion 일정을 찾거나,
+            일정의 수정 또는 삭제를 요청할 때
+            해당 일정의 Page ID를 찾기 위해 사용합니다.
+
+            title에는 사용자가 언급한 일정의 제목을 입력합니다.
+
+            예시:
+            사용자: "정보통신공학과 회의를 찾아줘"
+
+            title: "정보통신공학과 회의"
+            """)
+            .inputType(FindEventRequest.class)
+            .build();
     }
 }

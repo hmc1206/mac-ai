@@ -32,7 +32,10 @@ public class MacController {
 
         String response = chatClient.prompt()
                 .user(message)
-                .tools(notionTools.getAddEventTool())
+                .tools(
+                        notionTools.getAddEventTool(),
+                        notionTools.getFindEventTool()
+                )
                 .call()
                 .content();
 
@@ -41,15 +44,19 @@ public class MacController {
 
         try {
             JsonNode root = objectMapper.readTree(response);
+            //toot 사용 이름
+            String toolName = root.path("name").asText();
+            // arguments만 추출
+            JsonNode arguments = root.path("arguments");
+
             // AI가 addNotionEvent 호출을 요청한 경우
             if ("addNotionEvent".equals(root.path("name").asText())) {
-                // arguments만 추출
-                JsonNode arguments = root.path("arguments");
-                //System.out.println("=== Tool Arguments ===");
-                //System.out.println(arguments);
-
                 // Tool이 기대하는 형식으로 전달
                 return notionTools.getAddEventTool().call(arguments.toString());
+            }
+
+            if("findNotionEvent".equals(toolName)){
+                return notionTools.getFindEventTool().call(arguments.toString());
             }
 
         } catch (Exception e) {
