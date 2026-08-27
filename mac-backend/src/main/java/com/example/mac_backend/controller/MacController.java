@@ -34,7 +34,8 @@ public class MacController {
                 .user(message)
                 .tools(
                         notionTools.getAddEventTool(),
-                        notionTools.getFindEventTool()
+                        notionTools.getFindEventTool(),
+                        notionTools.getUpdateEventStatusTool()
                 )
                 .call()
                 .content();
@@ -57,6 +58,9 @@ public class MacController {
 
             if("findNotionEvent".equals(toolName)){
                 return notionTools.getFindEventTool().call(arguments.toString());
+            }
+            if ("updateNotionEventStatus".equals(toolName)) {
+                return notionTools.getUpdateEventStatusTool().call(arguments.toString());
             }
 
         } catch (Exception e) {

@@ -127,4 +127,82 @@ public class NotionService {
             return null;
         }
     }
+
+    //특정 Notion 일정의 상태를 변경함
+    public String updateEventStatus(String pageId, String status){
+        //@param pageId 상태를 변경할 Notion 페이지 ID
+        //@param status 변경할 상태
+        //@return 상태 변경 결과 메시지
+
+        //변경할 Notion 속성 정보를 생성
+        Map<String, Object> properties = Map.of(
+            "상태", Map.of(
+                    "status", Map.of(
+                            "name", status
+                        )
+                )
+        );
+
+        //Notion API에 전달한 요청 Body
+        Map<String, Object> requestBoody = Map.of(
+                "properties", properties
+        );
+
+        try {
+            String response = webClient.patch()
+                    //특정 Page ID의 정보를 수정
+                    .uri("/pages/{pageId}", pageId)
+                    //변경할 상태 정보를 전달
+                    .bodyValue(requestBoody)
+                    .retrieve()
+                    .bodyToMono(String.class)
+                    .block();
+
+            System.out.println("==== Notion 일정 상태 수정 성공 ====");
+            System.out.println(response);
+
+            return "일정 상태를 '" + status + "'으로 변경했습니다";
+        } catch (WebClientResponseException e) {
+
+            System.err.println("Notion API Error: "
+                    + e.getResponseBodyAsString());
+
+            return "일정 상태 변경 실패: "
+                    + e.getResponseBodyAsString();
+
+        } catch (Exception e) {
+
+            return "일정 상태 변경 실패: "
+                    + e.getMessage();
+        }
+    }
+
+    //특정 Notion 일정을 삭제함
+    public String archiveEvent(String pageId) {
+        // Notion 페이지를 archived 상태로 변경합니다.
+        Map<String, Object> requestBody = Map.of("archived", true);
+
+        try {
+            String response = webClient.patch()
+                    // 삭제할 특정 Page ID를 지정합니다.
+                    .uri("/pages/{pageId}", pageId)
+                    // archived=true 값을 전달합니다.
+                    .bodyValue(requestBody)
+                    .retrieve()
+                    .bodyToMono(String.class)
+                    .block();
+
+            System.out.println("=== Notion 일정 삭제 성공 ===");
+            System.out.println(response);
+
+            return "일정을 삭제했습니다.";
+        } catch (WebClientResponseException e) {
+            System.err.println("Notion API Error: " + e.getResponseBodyAsString());
+            return "일정 삭제 실패: "+ e.getResponseBodyAsString();
+        } catch (Exception e) {
+
+            return "일정 삭제 실패: "
+                    + e.getMessage();
+        }
+    }
 }

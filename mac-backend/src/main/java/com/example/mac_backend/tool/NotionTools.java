@@ -29,6 +29,24 @@ public class NotionTools {
             String title
     ){}
 
+    //Notion 일정 상태 수정 Tool의 입력값
+    public  record UpdateEventstatusRequest(
+            @Description("수정할 Notion 페이지의 Page ID")
+            String pageId,
+
+            @Description("""
+                    변경할 일정 상태.
+                    예 : 시작 전, 진행 중, 완료
+                    """)
+            String status
+    ) {}
+
+    //Notion 일정 삭제 Tool의 입력값
+    public record ArchiveEventRequest(
+            @Description("삭제할 Notion 페이지의 Page ID")
+            String pageId
+    ) {}
+
     //일정을 추가하는 Tool
     public ToolCallback getAddEventTool() {
         return FunctionToolCallback.builder("addNotionEvent", (AddEventRequest req) -> {
@@ -76,10 +94,67 @@ public class NotionTools {
 
             예시:
             사용자: "정보통신공학과 회의를 찾아줘"
-
             title: "정보통신공학과 회의"
             """)
             .inputType(FindEventRequest.class)
             .build();
+    }
+
+    //Notion 일정 상태를 수정하는 Tool
+    public ToolCallback getUpdateEventStatusTool() {
+        return FunctionToolCallback.builder("updateNotionEventStatus",(UpdateEventstatusRequest req) -> {
+                    System.out.println("=== Notion 일정 상태 수정 Tool 호출 ===");
+
+                    System.out.println("pageId: " + req.pageId());
+                    System.out.println("status: " + req.status());
+
+                    return notionService.updateEventStatus(
+                            req.pageId(),
+                            req.status
+                    );
+                }
+            )
+            .description("""
+                    Notion에 저장된 일정의 상태를 변경할 때 사용합니다.
+                    
+                    사용자가 다음과 같이 일정 상태 변경을 요청하면 사용합니다.
+                    pageId에는 예시 값이나 "<page-id>" 같은 문자열을 넣으면 안 됩니다.
+                    반드시 Notion에서 조회한 실제 Page ID를 사용해야 합니다.
+    
+                    예시:
+                    "정보통신공학과 회의를 진행중으로 바꿔줘"
+                    "프로젝트 회의를 완료로 변경해줘"
+    
+                    pageId에는 수정할 Notion 페이지 ID를 입력합니다.
+                    status에는 변경할 상태를 입력합니다.
+    
+                    가능한 상태:
+                    시작 전
+                    진행중
+                    완료
+                """)
+            .inputType(UpdateEventstatusRequest.class)
+            .build();
+    }
+
+    //Notion 일정을 휴지통으로 이동하는 Tool
+    public ToolCallback getArchiveEventTool() {
+
+        return FunctionToolCallback.builder("archiveNotionEvent",
+                        (ArchiveEventRequest req) -> {
+                            System.out.println("=== Notion 일정 삭제 Tool 호출 ===");
+                            System.out.println("pageId: " + req.pageId());
+
+                            return notionService.archiveEvent(req.pageId());
+                        }
+                )
+                .description("""
+                    특정 Notion 일정을 삭제할 때 사용합니다.
+
+                    pageId를 사용하여 해당 Notion 페이지를
+                    휴지통으로 이동합니다.
+                    """)
+                .inputType(ArchiveEventRequest.class)
+                .build();
     }
 }
