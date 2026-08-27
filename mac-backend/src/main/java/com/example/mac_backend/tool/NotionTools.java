@@ -76,6 +76,9 @@ public class NotionTools {
     public ToolCallback getFindEventTool(){
         return FunctionToolCallback.builder("findNotionEvent",
             (FindEventRequest req) -> {
+                System.out.println("=== Notion 일정 검색 Tool 호출 ===");
+                System.out.println("title: " + req.title());
+
                 String pageId = notionService.findEventByTitle(req.title());
 
                 //해당 제목의 일정이 없는 경우
@@ -129,9 +132,9 @@ public class NotionTools {
                     status에는 변경할 상태를 입력합니다.
     
                     가능한 상태:
-                    시작 전
-                    진행중
-                    완료
+                    - 시작 전
+                    - 진행 중
+                    - 완료
                 """)
             .inputType(UpdateEventstatusRequest.class)
             .build();
