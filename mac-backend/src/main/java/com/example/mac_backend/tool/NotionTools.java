@@ -1,5 +1,6 @@
 package com.example.mac_backend.tool;
 
+import com.example.mac_backend.model.EventSearchResult;
 import com.example.mac_backend.service.NotionService;
 import org.springframework.ai.tool.ToolCallback;
 import org.springframework.ai.tool.function.FunctionToolCallback;
@@ -81,10 +82,10 @@ public class NotionTools {
                 System.out.println("=== Notion 일정 검색 Tool 호출 ===");
                 System.out.println("title: " + req.title());
 
-                NotionService.EventSearchResult result = notionService.findEventByTitle(req.title());
+                EventSearchResult result = notionService.findEventByTitle(req.title());
 
                 System.out.println(
-                        "검색 결과 타입: " + result.resultType()
+                        "검색 결과 타입: " + result.status()
                 );
 
                 System.out.println(

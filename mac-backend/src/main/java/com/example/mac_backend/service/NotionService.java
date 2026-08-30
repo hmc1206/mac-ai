@@ -1,5 +1,8 @@
 package com.example.mac_backend.service;
 
+import com.example.mac_backend.model.EventInfo;
+import com.example.mac_backend.model.EventSearchResult;
+import com.example.mac_backend.model.SearchStatus;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.web.reactive.function.client.WebClient;
@@ -17,17 +20,6 @@ public class NotionService {
     private final WebClient webClient;
     private final ObjectMapper objectMapper;
 
-    public record NotionEvent(
-       String pageId,
-       String title,
-       String StartDate,
-       String status
-    ) {}
-
-    public record EventSearchResult(
-            String resultType,
-            List<NotionEvent> events
-    ){}
 
     @Value("${notion.database-id:}")
     private String databaseId;
@@ -123,15 +115,14 @@ public class NotionService {
 
             //Notion API의 JSON 응답을 파싱합니다.
             JsonNode root = objectMapper.readTree(response);
-
             //검색 결과 배열을 가져옴
             JsonNode results = root.path("results");
 
             if(results.isEmpty()){
-                return new EventSearchResult("NOT_FOUND", List.of());
+                return new EventSearchResult(SearchStatus.NOT_FOUND, List.of());
             }
 
-            List<NotionEvent> events = new java.util.ArrayList<>();
+            List<EventInfo> events = new java.util.ArrayList<>();
 
             for (JsonNode result : results) {
 
@@ -162,7 +153,7 @@ public class NotionService {
                         .asText();
 
                 events.add(
-                        new NotionEvent(
+                        new EventInfo(
                                 pageId,
                                 eventTitle,
                                 startDate,
@@ -174,17 +165,17 @@ public class NotionService {
             // 검색 결과가 정확히 하나인 경우
             if (events.size() == 1) {
                 return new EventSearchResult(
-                        "FOUND",
+                        SearchStatus.NOT_FOUND,
                         events
                 );
             }
 
             // 검색 결과가 여러 개인 경우
             return new EventSearchResult(
-                    "AMBIGUOUS",
+                    SearchStatus.AMBIGUOUS,
                     events
             );
-            
+
         } catch (Exception e) {
             System.err.println("Notion 일정 검색 실패 : " + e.getMessage());
             return null;
