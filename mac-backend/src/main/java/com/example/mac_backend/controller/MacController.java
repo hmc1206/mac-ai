@@ -9,6 +9,8 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
+import java.util.Map;
+
 @RestController
 @RequestMapping("/api/mac")
 public class MacController {
@@ -37,9 +39,11 @@ public class MacController {
                         ChatMemory.CONVERSATION_ID,
                         conversationId
                 ))
+                .toolContext(Map.of("conversationId", conversationId))
                 .tools(
                         notionTools.getAddEventTool(),
                         notionTools.getFindEventTool(),
+                        notionTools.getSelectEventTool(),
                         notionTools.getUpdateEventStatusTool(),
                         notionTools.getArchiveEventTool()
                 )
