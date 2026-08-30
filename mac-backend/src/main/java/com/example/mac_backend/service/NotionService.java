@@ -16,11 +16,12 @@ import java.util.Map;
 
 @Service
 public class NotionService {
-    //notion API와 HTTP 통신할 클라이언트
+    // notion API와 HTTP 통신할 클라이언트
     private final WebClient webClient;
+    // Notion API가 반환하는 JSON 문자열을 Java 객체처럼 다루기 위한 객체
     private final ObjectMapper objectMapper;
 
-
+    // Notion Database ID
     @Value("${notion.database-id:}")
     private String databaseId;
 
@@ -34,12 +35,12 @@ public class NotionService {
 
         this.objectMapper = objectMapper;
 
-        this.webClient = webClientBuilder //WebClient 설정
-                .baseUrl("https://api.notion.com/v1") //도든 API와 통신하기 위한 WebClient 설정
+        this.webClient = webClientBuilder                                           //WebClient 설정
+                .baseUrl("https://api.notion.com/v1")                               //Notion API와 통신하기 위한 WebClient 설정
                 .defaultHeader("Authorization", "Bearer " + apiKey) //헤더 설정
-                .defaultHeader("Notion-Version", notionVersion) //버전 설정
-                .defaultHeader("Content-Type", "application/json") //요청 데이터가 JSON 형식임을 지정
-                .build(); //객체 생성
+                .defaultHeader("Notion-Version", notionVersion)             //버전 설정
+                .defaultHeader("Content-Type", "application/json")  //요청 데이터가 JSON 형식임을 지정
+                .build();                                                           //객체 생성
     }
 
     //Notion 데이터베이스에 새로운 일정 추가 함수
@@ -65,6 +66,7 @@ public class NotionService {
         requestBody.put("properties", properties);
 
         try {
+            // POST /pages
             String response = webClient.post()
                     .uri("/pages")
                     .bodyValue(requestBody)

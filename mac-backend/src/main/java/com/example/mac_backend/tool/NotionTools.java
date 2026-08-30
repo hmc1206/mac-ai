@@ -51,10 +51,7 @@ public class NotionTools {
     ) {}
 
     //Notion 일정 삭제 Tool의 입력값
-    public record ArchiveEventRequest(
-            @Description("삭제할 Notion 페이지의 Page ID")
-            String pageId
-    ) {}
+    public record ArchiveEventRequest() {}
 
     //AgentState에 저장된 검색 결과에서 사용자가 선택한 이벤트를 찾아주는 Tool
     public record SelectEventRequest(
@@ -214,30 +211,26 @@ public class NotionTools {
 
         return FunctionToolCallback.builder("archiveNotionEvent",
                         (ArchiveEventRequest req, ToolContext toolContext) -> {
-                            System.out.println(
-                                    "=== Notion 일정 삭제 Tool 호출 ==="
-                            );
+                            System.out.println("=== Notion 일정 삭제 Tool 호출 ===");
 
-                            String conversationId =
-                                    (String) toolContext.getContext()
-                                            .get("conversationId");
+                            String conversationId =(String) toolContext.getContext().get("conversationId");
 
-                            AgentState state =
-                                    agentStateStore.getOrCreate(conversationId);
-
-                            EventInfo selectedEvent =
-                                    state.getSelectedEvent();
-
-                            if (selectedEvent == null) {
-                                return "삭제할 일정이 선택되지 않았습니다.";
+                            //conversationId 검증
+                            if (conversationId == null || conversationId.isBlank()) {
+                                return "대화 식별자가 없어 일정을 삭제할 수 없습니다.";
                             }
 
-                            String pageId =
-                                    selectedEvent.pageId();
+                            AgentState state = agentStateStore.getOrCreate(conversationId);
 
-                            System.out.println(
-                                    "삭제할 Page ID: " + pageId
-                            );
+                            EventInfo selectedEvent = state.getSelectedEvent();
+
+                            if (selectedEvent == null) {return "삭제할 일정이 선택되지 않았습니다.";}
+
+                            String pageId = selectedEvent.pageId();
+
+
+                            System.out.println("삭제할 일정: " + selectedEvent.title());
+                            System.out.println("삭제할 Page ID: " + pageId);
 
                             return notionService.archiveEvent(pageId);
                         }
@@ -360,7 +353,8 @@ public class NotionTools {
                     검색 결과가 2개이고 사용자가 "두 번째"라고 하면
                     selection = 2
 
-                    선택된 일정의 실제 Notion Page ID를 반환합니다.
+                    선택된 일정의 EventInfo를 반환합니다.    
+                    EventInfo에는 실제 Notion Page ID가 포함되어 있습니다.
                     """)
                 .inputType(SelectEventRequest.class)
                 .build();

@@ -41,11 +41,11 @@ public class MacController {
                 ))
                 .toolContext(Map.of("conversationId", conversationId))
                 .tools(
-                        notionTools.getAddEventTool(),
-                        notionTools.getFindEventTool(),
-                        notionTools.getSelectEventTool(),
-                        notionTools.getUpdateEventStatusTool(),
-                        notionTools.getArchiveEventTool()
+                        notionTools.getAddEventTool(),          //일정 추가
+                        notionTools.getFindEventTool(),         //일정 찾기
+                        notionTools.getSelectEventTool(),       //일정 선택
+                        notionTools.getUpdateEventStatusTool(), //일정 수정
+                        notionTools.getArchiveEventTool()       //일정 삭제
                 )
                 .call()
                 .content();
