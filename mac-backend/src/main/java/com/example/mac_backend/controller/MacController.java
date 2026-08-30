@@ -2,12 +2,12 @@ package com.example.mac_backend.controller;
 
 import com.example.mac_backend.tool.NotionTools;
 import org.springframework.ai.chat.client.ChatClient;
+import org.springframework.ai.chat.client.advisor.MessageChatMemoryAdvisor;
+import org.springframework.ai.chat.memory.ChatMemory;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
-import tools.jackson.databind.JsonNode;
-import tools.jackson.databind.ObjectMapper;
 
 @RestController
 @RequestMapping("/api/mac")
@@ -19,16 +19,24 @@ public class MacController {
     private final NotionTools notionTools;
 
     //생성자 생성
-    public MacController(ChatClient.Builder chatClientBuilder, NotionTools notionTools) {
-        this.chatClient = chatClientBuilder.build();
+    //ChatMemory 주입
+    public MacController(ChatClient.Builder chatClientBuilder, NotionTools notionTools, ChatMemory chatMemory) {
+        this.chatClient = chatClientBuilder.defaultAdvisors(
+                MessageChatMemoryAdvisor.builder(chatMemory).build()
+        ).build();
         this.notionTools = notionTools;
     }
 
     @GetMapping("/chat")
-    public String chatWithMac(@RequestParam String message) {
+    public String chatWithMac(@RequestParam String message, @RequestParam String conversationId) {
 
         String response = chatClient.prompt()
                 .user(message)
+                //MessageChatMemoryAdvisor추가
+                .advisors(advisor -> advisor.param(
+                        ChatMemory.CONVERSATION_ID,
+                        conversationId
+                ))
                 .tools(
                         notionTools.getAddEventTool(),
                         notionTools.getFindEventTool(),

@@ -17,6 +17,18 @@ public class NotionService {
     private final WebClient webClient;
     private final ObjectMapper objectMapper;
 
+    public record NotionEvent(
+       String pageId,
+       String title,
+       String StartDate,
+       String status
+    ) {}
+
+    public record EventSearchResult(
+            String resultType,
+            List<NotionEvent> events
+    ){}
+
     @Value("${notion.database-id:}")
     private String databaseId;
 
@@ -82,7 +94,7 @@ public class NotionService {
 
     //일정 제목을 기준으로 Notion 데이터베이스에서 해당 일정의 Page ID을 검색
     //@return 찾은 일정의 Page Id, 없으면 null
-    public String findEventByTitle(String title){
+    public EventSearchResult findEventByTitle(String title){
         //Notion Database Query의 검색 조건을 생성
         Map<String, Object> filter = Map.of(
                 "property", "이름",
@@ -116,12 +128,63 @@ public class NotionService {
             JsonNode results = root.path("results");
 
             if(results.isEmpty()){
-                return null;
+                return new EventSearchResult("NOT_FOUND", List.of());
             }
 
-            return results.get(0)
-                    .path("id")
-                    .asText();
+            List<NotionEvent> events = new java.util.ArrayList<>();
+
+            for (JsonNode result : results) {
+
+                String pageId = result
+                        .path("id")
+                        .asText();
+
+                String eventTitle = result
+                        .path("properties")
+                        .path("이름")
+                        .path("title")
+                        .path(0)
+                        .path("plain_text")
+                        .asText();
+
+                String startDate = result
+                        .path("properties")
+                        .path("마감일")
+                        .path("date")
+                        .path("start")
+                        .asText();
+
+                String status = result
+                        .path("properties")
+                        .path("상태")
+                        .path("status")
+                        .path("name")
+                        .asText();
+
+                events.add(
+                        new NotionEvent(
+                                pageId,
+                                eventTitle,
+                                startDate,
+                                status
+                        )
+                );
+            }
+
+            // 검색 결과가 정확히 하나인 경우
+            if (events.size() == 1) {
+                return new EventSearchResult(
+                        "FOUND",
+                        events
+                );
+            }
+
+            // 검색 결과가 여러 개인 경우
+            return new EventSearchResult(
+                    "AMBIGUOUS",
+                    events
+            );
+            
         } catch (Exception e) {
             System.err.println("Notion 일정 검색 실패 : " + e.getMessage());
             return null;
