@@ -40,9 +40,6 @@ public class NotionTools {
 
     //Notion 일정 상태 수정 Tool의 입력값
     public  record UpdateEventstatusRequest(
-            @Description("수정할 Notion 페이지의 Page ID")
-            String pageId,
-
             @Description("""
                     변경할 일정 상태.
                     예 : 시작 전, 진행 중, 완료
@@ -106,23 +103,15 @@ public class NotionTools {
                 // 검색 결과를 AgentState에 저장
                 state.setSearchResults(result.events());
 
-                System.out.println(
-                        "검색 결과 타입: " + result.status()
-                );
+                System.out.println("검색 결과 타입: " + result.status());
+                System.out.println("검색 결과 개수: " + result.events().size());
+                System.out.println("AgentState 저장 완료 - conversationId: " + conversationId);
+                System.out.println("AgentState 검색 결과 개수: " + state.getSearchResults().size());
 
-                System.out.println(
-                        "검색 결과 개수: " + result.events().size()
-                );
-
-                System.out.println(
-                        "AgentState 저장 완료 - conversationId: "
-                                + conversationId
-                );
-
-                System.out.println(
-                        "AgentState 검색 결과 개수: "
-                                + state.getSearchResults().size()
-                );
+                //새로운 검색이므로 이전 선택 상태 제거
+                state.clear();
+                //새로운 검색 결과 저장
+                state.setSearchResults(result.events());
 
                 return result;
             }
@@ -147,23 +136,30 @@ public class NotionTools {
         
            AMBIGUOUS:
            동일한 제목의 일정이 여러 개 존재합니다.
-           어떤 일정을 수정하거나 삭제해야 하는지
-           명확하지 않으므로 임의로 하나를 선택하면 안 됩니다.
-           날짜, 상태 등의 추가 정보를 사용자에게 요청해야 합니다.
-        
-           사용자가 직접 실제 Notion Page ID를 제공한 경우에는
-           해당 Page ID를 사용할 수 있습니다.
-        
-           예시:
-        
-           사용자:
-           "정보통신공학과 회의를 삭제해줘"
-        
-           처리:
-           1. findNotionEvent("정보통신공학과 회의")
-           2. 검색 결과 확인
-           3. 하나라면 실제 Page ID로 삭제
-           4. 여러 개라면 사용자에게 어떤 일정인지 질문
+           검색 결과를 사용자에게 번호를 붙여서 보여주고
+           각 일정의 제목, 날짜, 상태 등의 정보를 함께 안내합니다.
+
+           예:
+           1. 정보통신공학과 회의
+             날짜: 2026-08-30
+             상태: 진행 중
+
+           2. 정보통신공학과 회의
+             날짜: 2026-08-28
+             상태: 시작 전
+
+           그 다음 사용자에게 어떤 일정인지 선택하도록 요청합니다.
+
+           사용자가:
+           - 첫 번째
+           - 1번
+           - 두 번째
+           - 2번
+
+           등으로 선택하면 반드시 selectNotionEvent를 사용합니다.
+
+           검색 결과가 여러 개인 경우
+           임의로 하나를 선택하거나 바로 수정/삭제하지 않습니다.
             """)
             .inputType(FindEventRequest.class)
             .build();
@@ -171,16 +167,44 @@ public class NotionTools {
 
     //Notion 일정 상태를 수정하는 Tool
     public ToolCallback getUpdateEventStatusTool() {
-        return FunctionToolCallback.builder("updateNotionEventStatus",(UpdateEventstatusRequest req) -> {
+        return FunctionToolCallback.builder("updateNotionEventStatus",(UpdateEventstatusRequest req, ToolContext toolContext) -> {
                     System.out.println("=== Notion 일정 상태 수정 Tool 호출 ===");
-
-                    System.out.println("pageId: " + req.pageId());
                     System.out.println("status: " + req.status());
 
-                    return notionService.updateEventStatus(
-                            req.pageId(),
-                            req.status
-                    );
+                    String conversationId = (String) toolContext.getContext().get("conversationId");
+
+                    //conversationId 검증
+                    if(conversationId == null || conversationId.isBlank()) {return "대화 식별자가 없어 일정 상태를 수정할 수 없습니다"; }
+
+                    //현재 대화 AgentState 가져오기
+                    AgentState state = agentStateStore.getOrCreate(conversationId);
+
+                    //사용자가 선택한 일정 가져오기
+                    EventInfo selectedEvent = state.getSelectedEvent();
+
+                    //선택한 일정이 없는 경우
+                    if(selectedEvent == null){
+                        return "수정할 일정이 선택되지 않았습니다";
+                    }
+
+                    //선택한 일정에서 실제 Page ID 가져오기
+                    String pageId = selectedEvent.pageId();
+
+                    System.out.println("수정할 일정: " + selectedEvent.title());
+                    System.out.println("수정할 Page ID: " + pageId);
+                    System.out.println("변경할 상태: " + req.status());
+
+                    //Notion 일정 상태 수정
+                    String result = notionService.updateEventStatus(pageId, req.status());
+
+                    //작업 완료 후 AgentState 초기화
+                    state.clear();
+
+                    System.out.println("=== AgentState 초기화 완료 ===");
+                    System.out.println("searchResults 개수: " + state.getSearchResults().size());
+                    System.out.println("selectedEvent: " + state.getSelectedEvent());
+
+                    return result;
                 }
             )
             .description("""
@@ -228,11 +252,14 @@ public class NotionTools {
 
                             String pageId = selectedEvent.pageId();
 
-
                             System.out.println("삭제할 일정: " + selectedEvent.title());
                             System.out.println("삭제할 Page ID: " + pageId);
 
-                            return notionService.archiveEvent(pageId);
+                            String result = notionService.archiveEvent(pageId);
+                            //초기화
+                            state.clear();
+
+                            return result;
                         }
                 )
                 .description("""
