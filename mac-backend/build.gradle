@@ -32,6 +32,9 @@ dependencies {
 	testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
 	testAnnotationProcessor 'org.projectlombok:lombok'
 	implementation 'me.paulschwarz:spring-dotenv:4.0.0'
+
+	//Google News RSS(XML)를 파싱하기 위해 RSS 라이브러리(Rome)를 추가
+	implementation 'com.rometools:rome:1.18.0'
 }
 
 dependencyManagement {

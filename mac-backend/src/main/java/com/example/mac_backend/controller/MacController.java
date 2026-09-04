@@ -1,5 +1,7 @@
 package com.example.mac_backend.controller;
 
+import com.example.mac_backend.model.ProcessedNews;
+import com.example.mac_backend.service.NewsService;
 import com.example.mac_backend.tool.NotionTools;
 import org.springframework.ai.chat.client.ChatClient;
 import org.springframework.ai.chat.client.advisor.MessageChatMemoryAdvisor;
@@ -9,6 +11,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
+import java.util.List;
 import java.util.Map;
 
 @RestController
@@ -19,14 +22,22 @@ public class MacController {
     private final ChatClient chatClient;
     //notion 관련 AI Tool 관리 함수
     private final NotionTools notionTools;
+    //뉴스
+    private final NewsService newsService;
 
     //생성자 생성
     //ChatMemory 주입
-    public MacController(ChatClient.Builder chatClientBuilder, NotionTools notionTools, ChatMemory chatMemory) {
+    public MacController(ChatClient.Builder chatClientBuilder, NotionTools notionTools, ChatMemory chatMemory, NewsService newsService) {
         this.chatClient = chatClientBuilder.defaultAdvisors(
                 MessageChatMemoryAdvisor.builder(chatMemory).build()
         ).build();
         this.notionTools = notionTools;
+        this.newsService = newsService;
+    }
+
+    @GetMapping("/news/test")
+    public List<ProcessedNews> testNewsPipeline() {
+        return newsService.fetchAndProcessEconomyNews();
     }
 
     @GetMapping("/chat")

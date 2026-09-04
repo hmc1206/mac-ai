@@ -1,12 +1,14 @@
 server:
   port: 8080
 
-
 logging:
   level:
     org.springframework.ai: DEBUG
 
 spring:
+  config:
+    import:
+      - optional:file:.env[.properties]
   ai:
     ollama:
       base-url: http://localhost:11434
@@ -15,7 +17,14 @@ spring:
           model: "qwen3:8b"
           temperature: 0
 
+#노션
 notion:
   api-key: ${NOTION_API_KEY}
   database-id: ${NOTION_DATABASE_ID}
   version: ${NOTION_VERSION:2022-06-28}
+
+#네이버
+naver:
+  api:
+    client-id: ${NAVER_CLIENT_ID:}
+    client-secret: ${NAVER_CLIENT_SECRET:}
