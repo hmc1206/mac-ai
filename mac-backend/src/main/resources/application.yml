@@ -28,3 +28,7 @@ naver:
   api:
     client-id: ${NAVER_CLIENT_ID:}
     client-secret: ${NAVER_CLIENT_SECRET:}
+
+#옵시디언
+obsidian:
+  vault-path: ${OBSIDIAN_VAULT_PATH}
