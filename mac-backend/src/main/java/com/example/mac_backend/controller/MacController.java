@@ -3,6 +3,7 @@ package com.example.mac_backend.controller;
 import com.example.mac_backend.model.ProcessedNews;
 import com.example.mac_backend.service.NewsService;
 import com.example.mac_backend.tool.NotionTools;
+import com.example.mac_backend.tool.ObsidianTools;
 import org.springframework.ai.chat.client.ChatClient;
 import org.springframework.ai.chat.client.advisor.MessageChatMemoryAdvisor;
 import org.springframework.ai.chat.memory.ChatMemory;
@@ -24,15 +25,24 @@ public class MacController {
     private final NotionTools notionTools;
     //뉴스
     private final NewsService newsService;
+    //옵시디언
+    private  final ObsidianTools obsidianTools;
 
     //생성자 생성
     //ChatMemory 주입
-    public MacController(ChatClient.Builder chatClientBuilder, NotionTools notionTools, ChatMemory chatMemory, NewsService newsService) {
+    public MacController(
+            ChatClient.Builder chatClientBuilder,
+            NotionTools notionTools,
+            ObsidianTools obsidianTools,
+            ChatMemory chatMemory,
+            NewsService newsService
+    ) {
         this.chatClient = chatClientBuilder.defaultAdvisors(
                 MessageChatMemoryAdvisor.builder(chatMemory).build()
         ).build();
         this.notionTools = notionTools;
         this.newsService = newsService;
+        this.obsidianTools = obsidianTools;
     }
 
     @GetMapping("/news/test")
@@ -52,11 +62,15 @@ public class MacController {
                 ))
                 .toolContext(Map.of("conversationId", conversationId))
                 .tools(
+                        //Notion
                         notionTools.getAddEventTool(),          //일정 추가
                         notionTools.getFindEventTool(),         //일정 찾기
                         notionTools.getSelectEventTool(),       //일정 선택
                         notionTools.getUpdateEventStatusTool(), //일정 수정
-                        notionTools.getArchiveEventTool()       //일정 삭제
+                        notionTools.getArchiveEventTool(),      //일정 삭제
+
+                        //Obsidian
+                        obsidianTools.getAppendToDailyNoteTool()
                 )
                 .call()
                 .content();
