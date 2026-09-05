@@ -17,13 +17,6 @@ public class ObsidianService {
             @Value("${obsidian.vault-path}") String vaultPath
     ) {
         this.vaultPath = Path.of(vaultPath);
-
-        System.out.println("========== Obsidian ==========");
-        System.out.println("Vault Path      : " + this.vaultPath);
-        System.out.println("Vault Exists    : " + Files.exists(this.vaultPath));
-        System.out.println("Is Directory    : " + Files.isDirectory(this.vaultPath));
-        System.out.println("Is Writable     : " + Files.isWritable(this.vaultPath));
-        System.out.println("==============================");
     }
 
     public void createDailyNote(String date, String content) {
@@ -34,21 +27,48 @@ public class ObsidianService {
 
             Path dailyNote = dailyDirectory.resolve(date + ".md");
 
-            Files.writeString(
-                    dailyNote,
-                    content,
-                    StandardCharsets.UTF_8
-            );
+            Files.writeString(dailyNote, content, StandardCharsets.UTF_8);
 
-            System.out.println(
-                    "Obsidian Daily Note 생성 완료: " + dailyNote
-            );
+            System.out.println("Obsidian Daily Note 생성 완료: " + dailyNote);
 
         } catch (IOException e) {
-            throw new RuntimeException(
-                    "Obsidian Daily Note 생성 실패",
-                    e
-            );
+            throw new RuntimeException("Obsidian Daily Note 생성 실패", e);
+        }
+    }
+
+    public void appendToDailyNote(String date, String content) {
+        try {
+            Path dailyNote = vaultPath.resolve("03_Daily").resolve(date + ".md");
+
+            if (!Files.exists(dailyNote)) {
+                throw new IllegalArgumentException("Daily Note가 존재하지 않습니다: " + dailyNote);
+            }
+
+            String existingContent = Files.readString(dailyNote, StandardCharsets.UTF_8);
+
+            String newsHeading = "## 📰 오늘의 뉴스";
+            String nextHeading = "## 📝 오늘의 메모";
+
+            int newsIndex = existingContent.indexOf(newsHeading);
+            int nextIndex = existingContent.indexOf(nextHeading);
+
+            if (newsIndex == -1) {throw new IllegalArgumentException("Daily Note에 뉴스 섹션이 없습니다.");}
+
+            if (nextIndex == -1 || nextIndex <= newsIndex) {
+                throw new IllegalArgumentException("Daily Note의 섹션 구조가 올바르지 않습니다.");
+            }
+
+            String updatedContent = existingContent.substring(0, nextIndex) + content.trim() + "\n\n" + existingContent.substring(nextIndex);
+
+            Files.writeString(dailyNote, updatedContent, StandardCharsets.UTF_8);
+
+            System.out.println("Obsidian Daily Note 업데이트 완료: " + dailyNote);
+
+        } catch (Exception e) {
+            System.err.println("Obsidian Daily Note 업데이트 실패");
+            e.printStackTrace();
+
+            throw new RuntimeException("Obsidian Daily Note 업데이트 실패", e);
         }
     }
 }

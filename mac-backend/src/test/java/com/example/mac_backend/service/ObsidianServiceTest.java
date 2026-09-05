@@ -35,4 +35,17 @@ class ObsidianServiceTest {
 
         obsidianService.createDailyNote(date, content);
     }
+
+    @Test
+    public void appendToTodayDailyNote() {
+        String date = "2026-09-05";
+
+        String content = """
+        ### ### 개발 뉴스
+       
+        - 새로운 개발 기술이 공개됐다.
+        """;
+
+        obsidianService.appendToDailyNote(date, content);
+    }
 }

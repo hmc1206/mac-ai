@@ -13,11 +13,7 @@ public class ObsidianTools {
     }
 
     public String createDailyNote(String content) {
-
-        obsidianService.createDailyNote(
-                "2026-09-05",
-                content
-        );
+        obsidianService.createDailyNote("2026-09-05", content);
 
         return "Obsidian Daily Note가 생성되었습니다.";
     }
