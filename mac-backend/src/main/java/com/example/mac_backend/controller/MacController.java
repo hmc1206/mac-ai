@@ -2,6 +2,7 @@ package com.example.mac_backend.controller;
 
 import com.example.mac_backend.model.ProcessedNews;
 import com.example.mac_backend.service.NewsService;
+import com.example.mac_backend.tool.NewsTools;
 import com.example.mac_backend.tool.NotionTools;
 import com.example.mac_backend.tool.ObsidianTools;
 import org.springframework.ai.chat.client.ChatClient;
@@ -25,6 +26,7 @@ public class MacController {
     private final NotionTools notionTools;
     //뉴스
     private final NewsService newsService;
+    private final NewsTools newsTools;
     //옵시디언
     private  final ObsidianTools obsidianTools;
 
@@ -35,13 +37,15 @@ public class MacController {
             NotionTools notionTools,
             ObsidianTools obsidianTools,
             ChatMemory chatMemory,
-            NewsService newsService
+            NewsService newsService,
+            NewsTools newsTools
     ) {
         this.chatClient = chatClientBuilder.defaultAdvisors(
                 MessageChatMemoryAdvisor.builder(chatMemory).build()
         ).build();
         this.notionTools = notionTools;
         this.newsService = newsService;
+        this.newsTools = newsTools;
         this.obsidianTools = obsidianTools;
     }
 
@@ -69,8 +73,11 @@ public class MacController {
                         notionTools.getUpdateEventStatusTool(), //일정 수정
                         notionTools.getArchiveEventTool(),      //일정 삭제
 
+                        //News
+                        newsTools.getTodayEconomyNewsTool(),
+
                         //Obsidian
-                        obsidianTools.getAppendToDailyNoteTool()
+                        obsidianTools.getAppendToTodayDailyNoteTool()
                 )
                 .call()
                 .content();

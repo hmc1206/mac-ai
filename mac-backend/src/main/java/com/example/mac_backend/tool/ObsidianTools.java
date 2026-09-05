@@ -14,29 +14,26 @@ public class ObsidianTools {
     }
 
     public record AppendDailyNoteRequest(
-            String date,
             String content
     ) {}
 
     public FunctionToolCallback<AppendDailyNoteRequest, String>
-    getAppendToDailyNoteTool() {
+    getAppendToTodayDailyNoteTool() {
 
         return FunctionToolCallback
-                .builder(
-                        "append_to_daily_note",
+                .builder("append_to_today_daily_note",
                         (AppendDailyNoteRequest request) -> {
+                            obsidianService.appendToTodayDailyNote(request.content());
 
-                            obsidianService.appendToDailyNote(
-                                    request.date(),
-                                    request.content()
-                            );
-
-                            return "Daily Note에 내용을 저장했습니다.";
+                            return "오늘의 Daily Note에 내용을 저장했습니다.";
                         }
                 )
                 .description(
-                        "Obsidian의 Daily Note에 Markdown 내용을 추가합니다. " +
-                                "date는 YYYY-MM-DD 형식입니다."
+                        "오늘 날짜의 Obsidian Daily Note에서 " +
+                                "'## 📰 오늘의 뉴스' 섹션에 뉴스 내용을 추가합니다. " +
+                                "content에는 뉴스 항목만 포함해야 합니다. " +
+                                "'##' 수준의 섹션 제목이나 저장 완료 메시지는 포함하지 마세요. " +
+                                "각 뉴스는 '###' 제목과 요약 및 영향 정보로 구성하세요."
                 )
                 .inputType(AppendDailyNoteRequest.class)
                 .build();
