@@ -28,6 +28,10 @@ public class NewsAiService {
                    이해할 수 있도록 작성하세요.
                 2. 카테고리를 [국내경제], [해외경제], [정부정책], [금융/금리] 중 하나로 분류하세요.
                 3. 이 뉴스가 경제나 시장에 미칠 영향을 한 문장으로 정리하세요.
+                
+                [주의사항]
+                - 원문에 없는 사실을 추가하지 마세요.
+                - 불확실한 내용은 사실처럼 단정하지 마세요.
                 """.formatted(article.title(), article.description());
 
         return chatClient.prompt()
